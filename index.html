@@ -1529,6 +1529,8 @@
                         const q = snap.val();
                         if (!q) return;
 
+                        console.log('Received question:', q); // Debug log
+
                         const trans = await this.translateText(q.text, q.lang, this.state.lang);
                         this.renderQuestion(trans, q.text, q.senderName);
 
@@ -1549,7 +1551,14 @@
                 }
 
                 renderQuestion(text, original, sender) {
+                    console.log('Rendering question:', { text, original, sender }); // Debug log
+                    
                     const list = document.getElementById('teacher-questions');
+                    if (!list) {
+                        console.error('teacher-questions element not found'); // Debug log
+                        return;
+                    }
+                    
                     const card = document.createElement('div');
                     card.className = "bg-white border border-blue-100 p-3 rounded-xl shadow-sm animate-slide-up cursor-pointer hover:border-blue-300 transition-colors";
                     card.innerHTML = `
@@ -1563,7 +1572,11 @@
                     list.prepend(card);
 
                     const count = document.getElementById('question-count');
-                    count.innerText = parseInt(count.innerText || '0') + 1;
+                    if (count) {
+                        count.innerText = parseInt(count.innerText || '0') + 1;
+                    } else {
+                        console.error('question-count element not found'); // Debug log
+                    }
                 }
 
                 async toggleMic() {
@@ -1683,16 +1696,22 @@
                     const val = document.getElementById('q-input').value.trim();
                     if (!val) return;
 
+                    console.log('Sending question:', val); // Debug log
+
                     push(ref(this.db, `chats/${this.state.room}/questions`), {
                         text: val,
                         lang: this.state.lang,
                         senderName: this.state.name,
                         timestamp: Date.now()
+                    }).then(() => {
+                        console.log('Question sent successfully'); // Debug log
+                        document.getElementById('q-input').value = '';
+                        this.toggleModal('question');
+                        this.showToast("Question Sent", "success");
+                    }).catch((error) => {
+                        console.error('Failed to send question:', error);
+                        this.showToast("Failed to send question", "error");
                     });
-
-                    document.getElementById('q-input').value = '';
-                    this.toggleModal('question');
-                    this.showToast("Question Sent", "success");
                 }
 
                 sendReaction(emoji) {
